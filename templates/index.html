@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Question Answering</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+            letter-spacing: 2px;
+        }
+
+        .container {
+            width: 60%;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+
+        .container:hover {
+            transform: scale(1.02);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        label {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="file"],
+        textarea {
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .answer {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e0f7fa;
+            border-radius: 8px;
+            border: 2px solid #4CAF50;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .answer h2 {
+            color: #4CAF50;
+            font-size: 1.8em;
+        }
+
+        .answer p {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .error-message {
+            color: red;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>PDF Question Answering</h1>
+    </header>
+
+    <div class="container">
+        <form method="POST" enctype="multipart/form-data">
+            <label for="pdf_file">Upload PDF:</label>
+            <input type="file" name="pdf_file" id="pdf_file" required><br>
+
+            <label for="questions">Your Questions (One per line):</label>
+            <textarea name="questions" id="questions" rows="5" placeholder="Enter one question per line" required></textarea><br>
+
+            <button type="submit">Submit</button>
+        </form>
+
+        {% if error_message %}
+            <div class="error-message">
+                <p>{{ error_message }}</p>
+            </div>
+        {% endif %}
+
+        {% if answers %}
+            <div class="answer">
+                <h2>Answers:</h2>
+                {% for answer in answers %}
+                    <p><strong>Q: </strong>{{ answer.question }}</p>
+                    <p><strong>A: </strong>{{ answer.answer }}</p>
+                    <hr>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <footer>
+        <p>&copy; 2024 DocNova</p>
+    </footer>
+</body>
+</html>

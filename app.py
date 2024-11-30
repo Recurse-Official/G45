@@ -1,76 +1,75 @@
+import os
 from flask import Flask, render_template, request
-import PyPDF2
+from PyPDF2 import PdfReader
+from sentence_transformers import SentenceTransformer, util
+import faiss
 from transformers import pipeline
 
 app = Flask(__name__)
 
-# Initialize the question-answering pipeline with a more advanced model
-qa_pipeline = pipeline("question-answering", model="deepset/roberta-base-squad2")
+# Load models
+embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+qa_model = pipeline("question-answering", model="deepset/roberta-base-squad2")
 
-# Function to extract text from the uploaded PDF file
-def extract_text_from_pdf(pdf_file):
-    with open(pdf_file, "rb") as file:
-        pdf_reader = PyPDF2.PdfReader(file)
-        text = ""
-        for page_num in range(len(pdf_reader.pages)):
-            page = pdf_reader.pages[page_num]
-            text += page.extract_text()
-    return text
+# Directory containing PDF files
+DATA_FOLDER = "data"
 
-# Function to split text into smaller chunks for better processing
-def split_text_into_chunks(text, chunk_size=500):
-    words = text.split()
-    for i in range(0, len(words), chunk_size):
-        yield " ".join(words[i:i + chunk_size])
+# Extract text from PDFs
+def extract_text_from_pdfs(folder_path):
+    documents = []
+    titles = []
+    for file_name in os.listdir(folder_path):
+        if file_name.endswith(".pdf"):
+            pdf_path = os.path.join(folder_path, file_name)
+            with open(pdf_path, "rb") as file:
+                reader = PdfReader(file)
+                text = ""
+                for page in reader.pages:
+                    text += page.extract_text()
+                documents.append(text)
+                titles.append(file_name)
+    return documents, titles
+
+# Build FAISS index
+def build_faiss_index(documents):
+    embeddings = embedding_model.encode(documents, convert_to_tensor=True).cpu().numpy()
+    index = faiss.IndexFlatL2(embeddings.shape[1])
+    index.add(embeddings)
+    return index
+
+# Preprocess and index the data
+documents, doc_titles = extract_text_from_pdfs(DATA_FOLDER)
+faiss_index = build_faiss_index(documents)
 
 @app.route("/", methods=["GET", "POST"])
 def home():
-    answers = []
+    answer = None
     error_message = None
+    relevant_doc = None
     if request.method == "POST":
-        pdf_file = request.files.get("pdf_file")
-        questions = request.form.get("questions").strip().splitlines()
+        question = request.form.get("question").strip()
+        if not question:
+            error_message = "Please enter a valid question."
+        else:
+            try:
+                # Generate question embedding
+                question_embedding = embedding_model.encode([question], convert_to_tensor=True).cpu().numpy()
+                
+                # Search for the most relevant document
+                distances, indices = faiss_index.search(question_embedding, k=1)
+                if distances[0][0] < 0.8:  # Adjust threshold for relevance
+                    error_message = "Not a relevant question. Please ask a question related to the uploaded documents."
+                else:
+                    relevant_idx = indices[0][0]
+                    relevant_doc = documents[relevant_idx]
+                    
+                    # Generate a descriptive answer
+                    qa_result = qa_model({"question": question, "context": relevant_doc})
+                    answer = qa_result['answer']
+            except Exception as e:
+                error_message = f"Error processing your question: {str(e)}"
 
-        # Check if the user has uploaded a PDF
-        if not pdf_file:
-            error_message = "Please upload a PDF file."
-            return render_template("index.html", error_message=error_message)
-
-        # Save the PDF file temporarily to extract text
-        pdf_path = f"temp.pdf"
-        pdf_file.save(pdf_path)
-
-        # Extract text from the uploaded PDF
-        pdf_text = extract_text_from_pdf(pdf_path)
-
-        # Split the text into smaller chunks
-        chunks = list(split_text_into_chunks(pdf_text))
-
-        # Loop through each question and get the answer
-        for question in questions:
-            full_answer = ""
-            for chunk in chunks:
-                try:
-                    # Get the answer using Hugging Face pipeline
-                    result = qa_pipeline(
-                        {
-                            'context': chunk,
-                            'question': question
-                        },
-                        max_answer_len=200  # Allow longer, descriptive answers
-                    )
-                    full_answer += result['answer'] + " "
-                except Exception as e:
-                    error_message = f"Error processing question: {str(e)}"
-                    break
-
-            # Append the final answer for the question
-            answers.append({
-                "question": question,
-                "answer": full_answer.strip()
-            })
-
-    return render_template("index.html", answers=answers, error_message=error_message)
+    return render_template("index.html", answer=answer, error_message=error_message, doc_title=doc_titles[indices[0][0]] if relevant_doc else None)
 
 if __name__ == "__main__":
     app.run(debug=True)

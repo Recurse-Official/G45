@@ -1,0 +1,110 @@
+:root {
+  --color-primary: #6e2855; /* Red */
+  --color-secondary: #33333396; /* Dark grey */
+  --color-accent: #ffffff; /* White */
+  --color-text: #ffffff; /* White */
+  --color-button-hover: #c13a68; /* Light red */
+  --border-radius: 5px;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--color-secondary);
+}
+
+.qna-container {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.vanta-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
+
+.qna-content {
+  position: relative;
+  z-index: 2;
+  padding: 2rem;
+  color: var(--color-text);
+  text-align: center;
+  max-width: 600px;
+  max-height: 80%;
+  background: rgba(0, 0, 0, 0.363);
+  border-radius: var(--border-radius);
+  overflow-y: auto;
+}
+
+.qna-content h1 {
+  margin-bottom: 1rem;
+  font-size: 2.5em;
+}
+
+.qna-content p {
+  margin-bottom: 2rem;
+  font-size: 1.2em;
+  text-align: justify;
+}
+
+.qna-content input[type="file"] {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-radius: var(--border-radius);
+  border: 1px solid #6e2855;
+  background: var(--color-secondary);
+  color: var(--color-text);
+  display: block;
+  margin: 0 auto;
+}
+
+.qna-content button {
+  margin-top: 1rem;
+  background: #6e2855;
+  color: var(--color-text);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 1.1em;
+}
+
+.qna-content button:hover {
+  background-color: #c13a68;
+}
+
+.qna-list {
+  margin-top: 2rem;
+  width: 100%;
+  text-align: left;
+}
+
+.qna-pair {
+  background: var(--color-secondary);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--border-radius);
+  border: 1px solid #6e2855;
+}
+
+.qna-pair .question, .qna-pair .answer {
+  font-size: 1.2em;
+  margin: 5px 0;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+  text-align: center;
+}
